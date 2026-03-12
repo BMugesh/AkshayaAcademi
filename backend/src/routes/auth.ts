@@ -17,6 +17,14 @@ const authLimiter = rateLimit({
     message: { message: 'Too many authentication attempts, please try again after 15 minutes' }
 });
 
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many password reset attempts, please try again after 15 minutes' }
+});
+
 const generateToken = (userId: string, role: string, subscriptionStatus: string, name?: string) => {
     return jwt.sign(
         { id: userId, role, subscriptionStatus, name },
@@ -165,7 +173,7 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response)
 });
 
 // Reset Password - Verify OTP & Update
-router.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
+router.post('/reset-password', resetPasswordLimiter, async (req: Request, res: Response) => {
     try {
         const { email, otp, newPassword } = req.body;
         const user = await User.findOne({

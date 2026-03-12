@@ -50,7 +50,7 @@ const sections = [
         title: "Governing Law & Disputes",
         items: [
             "These Terms shall be governed by and construed in accordance with the laws of India.",
-            "Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts in Hyderabad, Telangana, India.",
+            "Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts in Coimbatore, Tamil Nadu, India.",
             "We encourage you to contact us first to resolve any issues before initiating formal legal proceedings.",
             "If any provision of these Terms is found to be unenforceable, the remaining provisions will continue in full force and effect.",
         ],
