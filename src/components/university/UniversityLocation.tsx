@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { University } from "@/data/universities";
 import { getLocationIntelligence } from "@/data/universityDetailsExtension";
-import { MapPin, Sun, Snowflake, ShieldCheck, Bus, Users, Map, Compass } from "lucide-react";
+import { MapPin, Sun, Snowflake, ShieldCheck, Bus, Users, Map, Compass, Briefcase } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface UniversityLocationProps {
