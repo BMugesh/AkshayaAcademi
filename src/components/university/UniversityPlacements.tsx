@@ -73,7 +73,7 @@ const UniversityPlacements = ({ university }: UniversityPlacementsProps) => {
       <div className="mb-10">
         <h3 className="text-xl font-bold text-foreground mb-4">Top Recruiting Companies</h3>
         <div className="flex flex-wrap gap-4 items-center">
-          {university.careerOutcomes?.topEmployers.map((employer, i) => (
+          {university.careerOutcomes?.topEmployers?.map((employer, i) => (
             <div key={i} className="flex items-center gap-3 px-5 py-3 bg-secondary/50 rounded-xl border border-border/50">
               {companyLogos[employer] && (
                 <img src={companyLogos[employer]} alt={employer} className="h-6 object-contain filter dark:invert" />
