@@ -102,17 +102,23 @@ app.use('/api/uploads', uploadsRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Database Connection
+console.log('Connecting to MongoDB...');
 mongoose
     .connect(process.env.MONGODB_URI!)
     .then(() => {
         console.log('Connected to MongoDB');
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-            console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
-        });
     })
     .catch((err: Error) => {
-        console.error('Failed to connect to MongoDB', err);
-        process.exit(1);
+        console.error('========================================================================');
+        console.error('WARNING: Failed to connect to MongoDB (likely IP whitelist or connection issue).');
+        console.error('The server will continue running, but DB features will be unavailable.');
+        console.error('========================================================================');
+        console.error(err.stack || err.message);
     });
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+});
+
 
