@@ -8,8 +8,10 @@ const userController_1 = require("../controllers/userController");
 const auth_1 = require("../middleware/auth");
 const validation_1 = require("../middleware/validation");
 const router = express_1.default.Router();
-// Fetch current user's full profile (including preferences, education, documents)
+// Fetch current user's full profile (personal + preferences + education + documents)
 router.get('/profile', auth_1.verifyToken, userController_1.getFullProfile);
-// Update onboarding progress for a specific step
-router.put('/profile', auth_1.verifyToken, validation_1.onboardingValidation, userController_1.updateOnboarding);
+// Update onboarding progress for a specific step (multi-step registration)
+router.put('/profile/step', auth_1.verifyToken, validation_1.onboardingValidation, userController_1.updateOnboarding);
+// Update profile — general flat update (used by Edit Profile modal)
+router.put('/profile', auth_1.verifyToken, userController_1.updateProfile);
 exports.default = router;

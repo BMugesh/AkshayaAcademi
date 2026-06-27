@@ -4,17 +4,20 @@ import { X, Phone, Mail, User, MessageSquare, Send, CheckCircle } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { API_BASE_URL } from "@/config";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CounselorModalProps {
+  universityId: string;
   universityName: string;
   onClose: () => void;
 }
 
-const CounselorModal = ({ universityName, onClose }: CounselorModalProps) => {
+const CounselorModal = ({ universityId, universityName, onClose }: CounselorModalProps) => {
+  const { user } = useAuth();
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +40,7 @@ const CounselorModal = ({ universityName, onClose }: CounselorModalProps) => {
       const res = await fetch(`${API_BASE_URL}/enquiries/counselor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, universityName }),
+        body: JSON.stringify({ ...form, universityId, universityName, userId: user?.id }),
       });
       if (!res.ok) {
         const data = await res.json();

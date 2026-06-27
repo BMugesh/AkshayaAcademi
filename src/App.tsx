@@ -26,8 +26,6 @@ import Unauthorized from "./pages/Unauthorized";
 import ForgotPassword from "./pages/ForgotPassword";
 import RegisterPage from "./pages/RegisterPage";
 import UniversityComparison from "./pages/UniversityComparison";
-import NewsPage from "./pages/News";
-import NewsDetailPage from "./pages/NewsDetail";
 
 const queryClient = new QueryClient();
 
@@ -63,8 +61,6 @@ const App = () => (
                             <Route path="/universities" element={<Universities />} />
                             <Route path="/universities/:id" element={<UniversityDetail />} />
                             <Route path="/compare" element={<UniversityComparison />} />
-                            <Route path="/news" element={<NewsPage />} />
-                            <Route path="/news/:slug" element={<NewsDetailPage />} />
                             <Route path="/enquiry" element={<Enquiry />} />
                             <Route path="/premium-plans" element={<PremiumPlans />} />
                             <Route path="/privacy" element={<Privacy />} />

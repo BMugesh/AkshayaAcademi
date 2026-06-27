@@ -3,7 +3,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IUniversityApplication extends Document {
     user: mongoose.Types.ObjectId;
     university: mongoose.Types.ObjectId;
-    country: mongoose.Types.ObjectId;
+    country?: mongoose.Types.ObjectId;
+    course: string;
     status: 'Pending' | 'Approved' | 'Rejected';
     appliedAt: Date;
     notes?: string;
@@ -16,6 +17,7 @@ const UniversityApplicationSchema: Schema = new Schema(
         user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
         university: { type: Schema.Types.ObjectId, ref: 'University', required: true, index: true },
         country: { type: Schema.Types.ObjectId, ref: 'Country', index: true },
+        course: { type: String, required: true },
         status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
         appliedAt: { type: Date, default: Date.now },
         notes: { type: String }

@@ -169,6 +169,11 @@ router.post('/:id/apply', verifyToken, async (req: AuthRequest, res: Response) =
     try {
         const { id } = req.params;
         const userId = req.user!.id;
+        const { course } = req.body;
+
+        if (!course) {
+            return res.status(400).json({ message: 'Course selection is required to apply' });
+        }
 
         let university = await University.findOne({ id });
         if (!university && (id as string).match(/^[0-9a-fA-F]{24}$/)) {
@@ -186,6 +191,7 @@ router.post('/:id/apply', verifyToken, async (req: AuthRequest, res: Response) =
         const application = await UniversityApplication.create({
             user: userId,
             university: university._id,
+            course,
             status: 'Pending',
         });
 

@@ -1,7 +1,21 @@
 import express, { Request, Response } from 'express';
 const router = express.Router();
+import jwt from 'jsonwebtoken';
 import { sendEmail } from '../utils/email';
 import { CounselorLead } from '../models/CounselorLead';
+import { University } from '../models/University';
+
+// Helper to optionally extract userId from cookie
+function tryGetUserId(req: Request): string | null {
+    const token = (req as any).cookies?.token;
+    if (!token) return null;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        return decoded.id || decoded._id || null;
+    } catch {
+        return null;
+    }
+}
 
 // @route   POST /api/enquiries
 // @desc    Receive an enquiry form submission and send email via EmailJS
@@ -52,14 +66,38 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 // @access  Public
 router.post('/counselor', async (req: Request, res: Response): Promise<void> => {
     try {
-        const { name, email, phone, universityName, message } = req.body;
+        const { name, email, phone, universityId, universityName, message } = req.body;
 
         if (!name || !email || !phone) {
             res.status(400).json({ message: 'Name, email and phone are required' });
             return;
         }
 
-        await CounselorLead.create({ name, email, phone, universityName, message });
+        let universityObj = null;
+        let finalUniversityName = universityName;
+
+        if (universityId) {
+            universityObj = await University.findOne({ id: universityId });
+            if (!universityObj && String(universityId).match(/^[0-9a-fA-F]{24}$/)) {
+                universityObj = await University.findById(universityId);
+            }
+            if (universityObj) {
+                finalUniversityName = universityObj.name;
+            }
+        }
+
+        const userId = tryGetUserId(req) || req.body.userId || null;
+
+        await CounselorLead.create({
+            user: userId || undefined,
+            university: universityObj ? universityObj._id : undefined,
+            name,
+            email,
+            phone,
+            universityName: finalUniversityName,
+            message,
+            status: 'Pending'
+        });
 
         res.status(201).json({ message: 'Your counselor request has been received. We will contact you within 24 hours.' });
     } catch (error) {

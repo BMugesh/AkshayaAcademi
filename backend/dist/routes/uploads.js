@@ -6,25 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 const auth_1 = require("../middleware/auth");
+const googleDrive_1 = require("../utils/googleDrive");
+const Documents_1 = require("../models/Documents");
 const router = express_1.default.Router();
-// Ensure uploads directory exists
-const uploadsDir = path_1.default.join(__dirname, '../../uploads');
-if (!fs_1.default.existsSync(uploadsDir)) {
-    fs_1.default.mkdirSync(uploadsDir, { recursive: true });
-}
-// Multer storage config
-const storage = multer_1.default.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, uploadsDir);
-    },
-    filename: (_req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        const ext = path_1.default.extname(file.originalname);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-    },
-});
+// Use memory storage — no disk writes; buffer is streamed straight to Google Drive
+const storage = multer_1.default.memoryStorage();
 const fileFilter = (_req, file, cb) => {
     const allowedMimeTypes = [
         'application/pdf',
@@ -43,12 +30,22 @@ const fileFilter = (_req, file, cb) => {
 const upload = (0, multer_1.default)({
     storage,
     fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
 });
-// POST /api/uploads/document
-// Field name should be one of: resume | transcript | sop
+const VALID_DOC_TYPES = ['resume', 'transcript', 'sop'];
+const DOC_FIELD_MAP = {
+    resume: 'resumeURL',
+    transcript: 'transcriptURL',
+    sop: 'sopURL',
+};
+/**
+ * POST /api/uploads/document
+ * Body (multipart/form-data):
+ *   - file: the document file
+ *   - docType: 'resume' | 'transcript' | 'sop'
+ */
 router.post('/document', auth_1.verifyToken, (req, res) => {
-    upload.single('file')(req, res, (err) => {
+    upload.single('file')(req, res, async (err) => {
         if (err instanceof multer_1.default.MulterError) {
             return res.status(400).json({ message: `Upload error: ${err.message}` });
         }
@@ -58,13 +55,44 @@ router.post('/document', auth_1.verifyToken, (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'No file provided' });
         }
-        const fileUrl = `/uploads/${req.file.filename}`;
-        res.json({
-            message: 'File uploaded successfully',
-            url: fileUrl,
-            originalName: req.file.originalname,
-            size: req.file.size,
-        });
+        const docType = req.body.docType;
+        if (!VALID_DOC_TYPES.includes(docType)) {
+            return res.status(400).json({
+                message: `Invalid docType. Must be one of: ${VALID_DOC_TYPES.join(', ')}`,
+            });
+        }
+        const userId = req.user.id;
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+        if (!folderId) {
+            return res.status(500).json({
+                message: 'Google Drive folder not configured. Set GOOGLE_DRIVE_FOLDER_ID in .env',
+            });
+        }
+        try {
+            const ext = path_1.default.extname(req.file.originalname);
+            const timestamp = Date.now();
+            const fileName = `${userId}_${docType}_${timestamp}${ext}`;
+            const driveResult = await (0, googleDrive_1.uploadToDrive)(req.file.buffer, req.file.mimetype, fileName, folderId);
+            // Persist the web view link in MongoDB Documents collection
+            const fieldKey = DOC_FIELD_MAP[docType];
+            await Documents_1.Documents.findOneAndUpdate({ userId }, { userId, [fieldKey]: driveResult.webViewLink }, { new: true, upsert: true });
+            return res.json({
+                message: 'File uploaded to Google Drive successfully',
+                url: driveResult.webViewLink,
+                downloadUrl: driveResult.webContentLink,
+                fileId: driveResult.fileId,
+                originalName: req.file.originalname,
+                size: req.file.size,
+            });
+        }
+        catch (uploadErr) {
+            console.error('Google Drive upload error:', uploadErr.message);
+            return res.status(500).json({
+                message: uploadErr.message?.includes('credentials not configured')
+                    ? uploadErr.message
+                    : 'Failed to upload file to Google Drive. Check server logs.',
+            });
+        }
     });
 });
 exports.default = router;

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import type { University } from "@/hooks/useUniversities";
 import UniversityHero from "@/components/university/UniversityHero";
 import UniversityWhyChoose from "@/components/university/UniversityWhyChoose";
 import UniversityCourses from "@/components/university/UniversityCourses";
-import UniversityEligibilityChecker from "@/components/university/UniversityEligibilityChecker";
 import UniversityRequirements from "@/components/university/UniversityRequirements";
 import UniversityCosts from "@/components/university/UniversityCosts";
 import UniversityPlacements from "@/components/university/UniversityPlacements";
@@ -29,6 +28,7 @@ import UniversityLocation from "@/components/university/UniversityLocation";
 import UniversityComparisonCTA from "@/components/university/UniversityComparisonCTA";
 import UniversityApplicationTracker from "@/components/university/UniversityApplicationTracker";
 import CounselorModal from "@/components/university/CounselorModal";
+import ApplyModal from "@/components/university/ApplyModal";
 import SimilarUniversities from "@/components/university/SimilarUniversities";
 
 type Tab = "overview" | "programs" | "finance" | "outcomes" | "apply";
@@ -37,11 +37,13 @@ const UniversityDetailPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [applyError, setApplyError] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showCounselorModal, setShowCounselorModal] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
 
   const { compareList, addToCompare, removeFromCompare, isInCompare, isFull } = useComparison();
 
@@ -58,30 +60,21 @@ const UniversityDetailPage = () => {
       : "",
   });
 
-  const handleApply = async () => {
+  useEffect(() => {
+    if (searchParams.get("apply") === "true" && user) {
+      setShowApplyModal(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("apply");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, user, setSearchParams]);
+
+  const handleApply = () => {
     if (!user) {
-      navigate("/login", { state: { from: `/universities/${id}` } });
+      navigate("/login", { state: { from: `/universities/${id}?apply=true` } });
       return;
     }
-    setIsSubmitting(true);
-    setApplyError("");
-    try {
-      const res = await fetch(`${API_BASE_URL}/universities/${university!.id}/apply`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok || res.status === 409) {
-        setIsSubmitted(true);
-      } else {
-        const data = await res.json();
-        setApplyError(data.message || "Something went wrong. Please try again.");
-      }
-    } catch {
-      setApplyError("Network error. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setShowApplyModal(true);
   };
 
   const uniAsCompareType = university as unknown as University;
@@ -131,7 +124,7 @@ const UniversityDetailPage = () => {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview & Campus" },
-    { id: "programs", label: "Programs & Eligibility" },
+    { id: "programs", label: "Programs" },
     { id: "finance", label: "Costs & Scholarships" },
     { id: "outcomes", label: "Placements & Reviews" },
     { id: "apply", label: "Application Journey" },
@@ -184,7 +177,6 @@ const UniversityDetailPage = () => {
 
                 {activeTab === "programs" && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                    <UniversityEligibilityChecker university={university} />
                     <UniversityCourses university={university} />
                     <UniversityRequirements university={university} />
                   </motion.div>
@@ -357,8 +349,18 @@ const UniversityDetailPage = () => {
       {/* Counselor Modal */}
       {showCounselorModal && (
         <CounselorModal
+          universityId={university.id}
           universityName={university.name}
           onClose={() => setShowCounselorModal(false)}
+        />
+      )}
+
+      {/* Apply Modal */}
+      {showApplyModal && (
+        <ApplyModal
+          university={university}
+          user={user}
+          onClose={() => setShowApplyModal(false)}
         />
       )}
     </div>

@@ -93,9 +93,6 @@ const UniversityScholarships = ({ university }: UniversityScholarshipsProps) => 
                     {scholarship.amount.replace('$', '')}
                   </p>
                 </div>
-                <Button className="w-full lg:w-auto bg-foreground text-background hover:bg-foreground/90">
-                  Check Eligibility
-                </Button>
               </div>
             </div>
           </motion.div>

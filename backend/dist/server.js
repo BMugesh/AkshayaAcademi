@@ -20,6 +20,9 @@ const analytics_1 = __importDefault(require("./routes/analytics"));
 const universities_1 = __importDefault(require("./routes/universities"));
 const onboarding_1 = __importDefault(require("./routes/onboarding"));
 const uploads_1 = __importDefault(require("./routes/uploads"));
+const admin_1 = __importDefault(require("./routes/admin"));
+const news_1 = __importDefault(require("./routes/news"));
+const newsCron_1 = require("./cron/newsCron");
 dotenv_1.default.config();
 // Validate required environment variables at startup
 const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
@@ -90,17 +93,24 @@ app.use('/api/analytics', analytics_1.default);
 app.use('/api/universities', universities_1.default);
 app.use('/api/onboarding', onboarding_1.default);
 app.use('/api/uploads', uploads_1.default);
+app.use('/api/admin', admin_1.default);
+app.use('/api/news', news_1.default);
 // Database Connection
+console.log('Connecting to MongoDB...');
 mongoose_1.default
     .connect(process.env.MONGODB_URI)
     .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-        console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
-    });
 })
     .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
-    process.exit(1);
+    console.error('========================================================================');
+    console.error('WARNING: Failed to connect to MongoDB (likely IP whitelist or connection issue).');
+    console.error('The server will continue running, but DB features will be unavailable.');
+    console.error('========================================================================');
+    console.error(err.stack || err.message);
+});
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+    (0, newsCron_1.startCronJobs)();
 });

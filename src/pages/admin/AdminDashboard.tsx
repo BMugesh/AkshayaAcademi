@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Users, Briefcase, Activity, BarChart2, CheckCircle,
-    LogOut, Settings, PanelLeftClose, PanelLeftOpen, Globe, Building2, Newspaper, Rss
+    LogOut, Settings, PanelLeftClose, PanelLeftOpen, Globe, Building2, Newspaper, Rss, Headphones
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -14,8 +14,9 @@ import { CountriesManager } from '../../components/admin/CountriesManager';
 import { ApplicationsTracker } from '../../components/admin/ApplicationsTracker';
 import { NewsManager } from '../../components/admin/NewsManager';
 import { NewsSourcesManager } from '../../components/admin/NewsSourcesManager';
+import { CounselorLeadsManager } from '../../components/admin/CounselorLeadsManager';
 
-type AdminTab = 'overview' | 'students' | 'universities' | 'countries' | 'applications' | 'news' | 'rss-sources';
+type AdminTab = 'overview' | 'students' | 'universities' | 'countries' | 'applications' | 'news' | 'rss-sources' | 'counselor-leads';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
@@ -28,6 +29,7 @@ const AdminDashboard = () => {
         { id: 'applications', label: 'Applications', icon: Briefcase },
         { id: 'universities', label: 'Universities', icon: Building2 },
         { id: 'countries', label: 'Countries', icon: Globe },
+        { id: 'counselor-leads', label: 'Counselor Leads', icon: Headphones },
         { id: 'news', label: 'News', icon: Newspaper },
         { id: 'rss-sources', label: 'RSS Sources', icon: Rss },
     ];
@@ -138,6 +140,7 @@ const AdminDashboard = () => {
                             {activeTab === 'universities' && <UniversitiesManager />}
                             {activeTab === 'countries' && <CountriesManager />}
                             {activeTab === 'applications' && <ApplicationsTracker />}
+                            {activeTab === 'counselor-leads' && <CounselorLeadsManager />}
                             {activeTab === 'news' && <NewsManager />}
                             {activeTab === 'rss-sources' && <NewsSourcesManager />}
                         </motion.div>

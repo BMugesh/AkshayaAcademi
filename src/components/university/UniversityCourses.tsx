@@ -136,7 +136,7 @@ const UniversityCourses = ({ university }: UniversityCoursesProps) => {
                     </div>
                     <Link to={`/enquiry?course=${course.name}&university=${university.name}`}>
                       <Button className="w-full bg-foreground text-background hover:bg-foreground/90 font-semibold shadow-md">
-                        Check Eligibility
+                        Enquire Now
                       </Button>
                     </Link>
                   </div>

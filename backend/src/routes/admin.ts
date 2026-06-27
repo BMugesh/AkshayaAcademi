@@ -9,6 +9,7 @@ import {
 import { verifyToken, requireRole } from '../middleware/auth';
 import { News } from '../models/News';
 import { NewsSource } from '../models/NewsSource';
+import { CounselorLead } from '../models/CounselorLead';
 import { runAggregator } from '../services/rssAggregator';
 
 const router = express.Router();
@@ -171,6 +172,45 @@ router.post('/news-sources/trigger', async (_req: Request, res: Response) => {
     runAggregator().then(({ total, errors }) => {
         console.log(`[ADMIN] Manual RSS trigger: ${total} articles, ${errors.length} errors`);
     }).catch(console.error);
+});
+
+// GET counselor leads (admin only)
+router.get('/counselor-lead', async (req: Request, res: Response) => {
+    try {
+        const { university } = req.query;
+        const query: any = {};
+        if (university) {
+            query.university = university;
+        }
+        const leads = await CounselorLead.find(query)
+            .populate('user', 'name email')
+            .populate('university', 'name id location')
+            .sort({ createdAt: -1 });
+        res.json(leads);
+    } catch (error) {
+        console.error('Error fetching counselor leads:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+// PUT update status of counselor lead
+router.put('/counselor-lead/:id/status', async (req: Request, res: Response) => {
+    try {
+        const { status } = req.body;
+        if (!['Pending', 'Contacted', 'Closed'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+        const lead = await CounselorLead.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+        if (!lead) return res.status(404).json({ message: 'Counselor lead not found' });
+        res.json(lead);
+    } catch (error) {
+        console.error('Error updating lead status:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
 });
 
 export default router;

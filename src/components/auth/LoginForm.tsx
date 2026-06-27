@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from '@/config';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowLeft, Sparkles, Globe, GraduationCap, Users, ShieldCheck, ChevronRight } from 'lucide-react';
@@ -23,6 +23,7 @@ export const LoginForm = () => {
 
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,12 +53,13 @@ export const LoginForm = () => {
             login(data.user);
 
             // Role-based redirection logic
+            const from = location.state?.from || '/';
             if (data.user.role === 'admin') {
                 navigate('/admin/dashboard', { replace: true });
             } else if (data.user.onboardingComplete === false) {
                 navigate('/register', { replace: true, state: { step: data.user.onboardingStep || 2 } });
             } else {
-                navigate('/', { replace: true });
+                navigate(from, { replace: true });
             }
         } catch (err: any) {
             toast.error(err.message || 'An error occurred. Please try again.');

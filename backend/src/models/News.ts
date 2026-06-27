@@ -26,6 +26,8 @@ export interface INews extends Document {
     featured: boolean;
     views: number;
     publishDate?: Date;
+    relatedUniversity?: string;
+    publishedDate?: Date;
     // AI & RSS fields
     aiSummary?: string;
     sourceUrl?: string;
@@ -58,12 +60,14 @@ const NewsSchema: Schema = new Schema(
         },
         tags: [{ type: String, trim: true }],
         universityName: { type: String, trim: true },
+        relatedUniversity: { type: String, trim: true },
         country: { type: String, trim: true },
         author: { type: String, required: true, trim: true, default: 'Akshaya Akademics' },
         status: { type: String, enum: ['draft', 'published'], default: 'draft' },
         featured: { type: Boolean, default: false },
         views: { type: Number, default: 0 },
         publishDate: { type: Date },
+        publishedDate: { type: Date },
         aiSummary: { type: String, trim: true },
         sourceUrl: { type: String, trim: true, index: true, sparse: true },
         isAutoFetched: { type: Boolean, default: false },
@@ -73,6 +77,17 @@ const NewsSchema: Schema = new Schema(
 
 // Auto-generate slug before save
 NewsSchema.pre<INews>('save', async function () {
+    if (this.universityName && !this.relatedUniversity) {
+        this.relatedUniversity = this.universityName;
+    } else if (this.relatedUniversity && !this.universityName) {
+        this.universityName = this.relatedUniversity;
+    }
+    if (this.publishDate && !this.publishedDate) {
+        this.publishedDate = this.publishDate;
+    } else if (this.publishedDate && !this.publishDate) {
+        this.publishDate = this.publishedDate;
+    }
+
     if (!this.isModified('title') && this.slug) return;
     const base = generateSlug(this.title);
     let slug = base;
