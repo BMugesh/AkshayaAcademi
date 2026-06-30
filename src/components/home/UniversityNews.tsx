@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Newspaper, Clock, Globe, ArrowRight, X, Building2, Calendar, BookOpen } from "lucide-react";
 import { useNews, useNewsArticle, type NewsArticle } from "@/hooks/useNews";
@@ -104,130 +105,129 @@ const ArticleModal = ({ slug, onClose }: { slug: string; onClose: () => void }) 
   const article = data?.article || fallbackArticle;
   const isReallyLoading = isLoading && !fallbackArticle;
 
-  return (
-    <AnimatePresence>
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
-        onClick={onClose}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-background rounded-3xl shadow-2xl w-full max-w-3xl border border-border/50 max-h-[85vh] flex flex-col overflow-hidden relative mx-auto"
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-background rounded-3xl shadow-2xl w-full max-w-3xl border border-border/50 max-h-[85vh] flex flex-col overflow-hidden relative"
-          onClick={(e) => e.stopPropagation()}
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-background/80 hover:bg-muted flex items-center justify-center border border-border shadow-sm transition-colors text-foreground"
+          aria-label="Close details"
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-background/80 hover:bg-muted flex items-center justify-center border border-border shadow-sm transition-colors text-foreground"
-            aria-label="Close details"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <X className="w-5 h-5" />
+        </button>
 
-          {isReallyLoading ? (
-            <div className="p-8 space-y-6 flex-1 overflow-y-auto animate-pulse">
-              <div className="aspect-[21/9] bg-muted/40 rounded-2xl" />
-              <div className="h-8 w-3/4 bg-muted/40 rounded-md" />
-              <div className="flex gap-4">
-                <div className="h-5 w-24 bg-muted/40 rounded-md" />
-                <div className="h-5 w-32 bg-muted/40 rounded-md" />
-              </div>
-              <div className="space-y-3">
-                <div className="h-4 w-full bg-muted/40 rounded-md" />
-                <div className="h-4 w-full bg-muted/40 rounded-md" />
-                <div className="h-4 w-5/6 bg-muted/40 rounded-md" />
-              </div>
+        {isReallyLoading ? (
+          <div className="p-8 space-y-6 flex-1 overflow-y-auto animate-pulse">
+            <div className="aspect-[21/9] bg-muted/40 rounded-2xl" />
+            <div className="h-8 w-3/4 bg-muted/40 rounded-md" />
+            <div className="flex gap-4">
+              <div className="h-5 w-24 bg-muted/40 rounded-md" />
+              <div className="h-5 w-32 bg-muted/40 rounded-md" />
             </div>
-          ) : article ? (
-            <div className="flex-1 overflow-y-auto">
-              {/* Header Image */}
-              {article.featuredImage && (
-                <div className="relative aspect-[21/9] w-full overflow-hidden border-b border-border/50">
-                  <img
-                    src={article.featuredImage}
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+            <div className="space-y-3">
+              <div className="h-4 w-full bg-muted/40 rounded-md" />
+              <div className="h-4 w-full bg-muted/40 rounded-md" />
+              <div className="h-4 w-5/6 bg-muted/40 rounded-md" />
+            </div>
+          </div>
+        ) : article ? (
+          <div className="flex-1 overflow-y-auto">
+            {/* Header Image */}
+            {article.featuredImage && (
+              <div className="relative aspect-[21/9] w-full overflow-hidden border-b border-border/50">
+                <img
+                  src={article.featuredImage}
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+              </div>
+            )}
+
+            {/* Content Details */}
+            <div className="p-6 md:p-8 space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={cn("px-3 py-1 rounded-full text-xs font-semibold border", CATEGORY_COLORS[article.category] || "bg-accent/10 text-accent")}>
+                  {article.category}
+                </span>
+                {(article.publishDate || article.createdAt) && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {format(new Date(article.publishDate || article.createdAt), "MMMM dd, yyyy")}
+                  </span>
+                )}
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                {article.title}
+              </h2>
+
+              {/* Sub-strip for references */}
+              {(article.universityName || article.country) && (
+                <div className="flex flex-wrap items-center gap-4 py-3 border-y border-border/40 text-sm">
+                  {article.universityName && (
+                    <div className="flex items-center gap-1.5 text-foreground/80 font-medium">
+                      <Building2 className="w-4 h-4 text-accent" />
+                      <span>{article.universityName}</span>
+                    </div>
+                  )}
+                  {article.country && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Globe className="w-4 h-4" />
+                      <span>{article.country}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Content Details */}
-              <div className="p-6 md:p-8 space-y-6">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className={cn("px-3 py-1 rounded-full text-xs font-semibold border", CATEGORY_COLORS[article.category] || "bg-accent/10 text-accent")}>
-                    {article.category}
-                  </span>
-                  {(article.publishDate || article.createdAt) && (
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(new Date(article.publishDate || article.createdAt), "MMMM dd, yyyy")}
-                    </span>
-                  )}
+              {/* Rich Content body */}
+              <div
+                className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed text-base space-y-4"
+                dangerouslySetInnerHTML={{ __html: article.content || `<p>${article.summary}</p>` }}
+              />
+
+              {article.sourceUrl && (
+                <div className="pt-4">
+                  <a
+                    href={article.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Visit Original Source Website
+                  </a>
                 </div>
-
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
-                  {article.title}
-                </h2>
-
-                {/* Sub-strip for references */}
-                {(article.universityName || article.country) && (
-                  <div className="flex flex-wrap items-center gap-4 py-3 border-y border-border/40 text-sm">
-                    {article.universityName && (
-                      <div className="flex items-center gap-1.5 text-foreground/80 font-medium">
-                        <Building2 className="w-4 h-4 text-accent" />
-                        <span>{article.universityName}</span>
-                      </div>
-                    )}
-                    {article.country && (
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Globe className="w-4 h-4" />
-                        <span>{article.country}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Rich Content body */}
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed text-base space-y-4"
-                  dangerouslySetInnerHTML={{ __html: article.content || `<p>${article.summary}</p>` }}
-                />
-
-                {article.sourceUrl && (
-                  <div className="pt-4">
-                    <a
-                      href={article.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
-                    >
-                      <Globe className="w-4 h-4" />
-                      Visit Original Source Website
-                    </a>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          ) : (
-            <div className="p-8 text-center text-muted-foreground flex-1 flex flex-col items-center justify-center">
-              <BookOpen className="w-12 h-12 mb-3 text-muted-foreground/40" />
-              <p className="text-lg">Failed to load article content.</p>
-              <Button onClick={onClose} variant="link" className="text-accent mt-2">Close</Button>
-            </div>
-          )}
-
-          <div className="p-4 border-t border-border/40 bg-secondary/10 flex justify-end">
-            <Button onClick={onClose} variant="secondary">Close</Button>
           </div>
-        </motion.div>
+        ) : (
+          <div className="p-8 text-center text-muted-foreground flex-1 flex flex-col items-center justify-center">
+            <BookOpen className="w-12 h-12 mb-3 text-muted-foreground/40" />
+            <p className="text-lg">Failed to load article content.</p>
+            <Button onClick={onClose} variant="link" className="text-accent mt-2">Close</Button>
+          </div>
+        )}
+
+        <div className="p-4 border-t border-border/40 bg-secondary/10 flex justify-end">
+          <Button onClick={onClose} variant="secondary">Close</Button>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>,
+    document.body
   );
 };
 
@@ -345,9 +345,11 @@ const UniversityNews = () => {
         </div>
 
         {/* View Modal */}
-        {selectedSlug && (
-          <ArticleModal slug={selectedSlug} onClose={() => setSelectedSlug(null)} />
-        )}
+        <AnimatePresence>
+          {selectedSlug && (
+            <ArticleModal slug={selectedSlug} onClose={() => setSelectedSlug(null)} />
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
