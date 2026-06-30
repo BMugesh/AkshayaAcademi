@@ -98,7 +98,11 @@ const NewsCardSkeleton = () => (
 
 const ArticleModal = ({ slug, onClose }: { slug: string; onClose: () => void }) => {
   const { data, isLoading } = useNewsArticle(slug);
-  const article = data?.article;
+  
+  // Fallback to static data if backend doesn't have the article
+  const fallbackArticle = STATIC_FALLBACKS.find((a) => a.slug === slug);
+  const article = data?.article || fallbackArticle;
+  const isReallyLoading = isLoading && !fallbackArticle;
 
   return (
     <AnimatePresence>
@@ -125,7 +129,7 @@ const ArticleModal = ({ slug, onClose }: { slug: string; onClose: () => void }) 
             <X className="w-5 h-5" />
           </button>
 
-          {isLoading ? (
+          {isReallyLoading ? (
             <div className="p-8 space-y-6 flex-1 overflow-y-auto animate-pulse">
               <div className="aspect-[21/9] bg-muted/40 rounded-2xl" />
               <div className="h-8 w-3/4 bg-muted/40 rounded-md" />
